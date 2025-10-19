@@ -10,6 +10,8 @@
         th { background-color: #f2f2f2; }
         .success { color: green; font-weight: bold; }
         .error { color: red; font-weight: bold; }
+        /* Adjusted layout for clarity */
+        .action-container { display: flex; flex-direction: column; gap: 5px; }
         .action-form { display: flex; gap: 5px; align-items: center; }
         input[type="text"] { padding: 5px; border: 1px solid #ccc; border-radius: 3px; }
         button { padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; color: white; }
@@ -44,14 +46,22 @@
                 <td>$<span th:text="${#numbers.formatDecimal(request.refundAmount, 0, 'COMMA', 2, 'POINT')}">100.00</span></td>
                 <td th:text="${#temporals.format(request.requestDate, 'yyyy-MM-dd HH:mm')}">2025-10-19</td>
                 <td>
-                    <form th:action="@{/admin/approve/{id}(id=${request.id})}" method="post" class="action-form">
-                        <input type="text" name="adminNotes" placeholder="Admin Notes" required>
-                        <button type="submit" class="approve-btn">Approve</button>
-                    </form>
-                    <form th:action="@{/admin/reject/{id}(id=${request.id})}" method="post" class="action-form" style="margin-top: 5px;">
-                        <input type="text" name="adminNotes" placeholder="Reason for Rejection" required>
-                        <button type="submit" class="reject-btn">Reject</button>
-                    </form>
+                    <!-- Use a container div to hold the two independent forms -->
+                    <div class="action-container">
+                        
+                        <!-- Approve Form -->
+                        <form th:action="@{/admin/approve/{id}(id=${request.id})}" method="post" class="action-form">
+                            <input type="text" name="adminNotes" placeholder="Admin Notes" required>
+                            <button type="submit" class="approve-btn">Approve</button>
+                        </form>
+                        
+                        <!-- Reject Form -->
+                        <form th:action="@{/admin/reject/{id}(id=${request.id})}" method="post" class="action-form">
+                            <input type="text" name="adminNotes" placeholder="Reason for Rejection" required>
+                            <button type="submit" class="reject-btn">Reject</button>
+                        </form>
+                        
+                    </div>
                 </td>
             </tr>
         </tbody>
