@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Return Submitted</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #4CAF50; background-color: #e8f5e9; border-radius: 8px; }
+        h1 { color: #4CAF50; }
+        p { margin-top: 10px; }
+        .detail { background-color: #fff; padding: 10px; border-radius: 4px; margin-top: 10px; }
+        a { color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Return Request Submitted!</h1>
+        <p th:text="${message}"></p>
+
+        <h2>Request Details:</h2>
+        <div class="detail">
+            <p><strong>Request ID:</strong> <span th:text="${details.id}"></span></p>
+            <p><strong>Status:</strong> <span th:text="${details.status}"></span></p>
+            <p><strong>Reason:</strong> <span th:text="${details.reason}"></span></p>
+            <p><strong>Quantity Returned:</strong> <span th:text="${details.quantityReturned}"></span></p>
+            <p><strong>Initial Refund Amount:</strong> $<span th:text="${#numbers.formatDecimal(details.refundAmount, 0, 'COMMA', 2, 'POINT')}"></span></p>
+        </div>
+        
+        <p style="margin-top: 20px;"><a th:href="@{/}">Submit another return</a></p>
+    </div>
+</body>
+</html>
