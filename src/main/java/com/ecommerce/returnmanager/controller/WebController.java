@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,11 +38,21 @@ public class WebController {
      * Serves the return request form page.
      */
     @GetMapping
-    public String showReturnForm(Model model) {
+    public String showReturnForm(Model model, @AuthenticationPrincipal UserDetails userDetails) {
         model.addAttribute("returnRequest", new ReturnRequest());
         
         List<ReturnReason> reasons = Arrays.asList(ReturnReason.values());
         model.addAttribute("reasons", reasons);
+        
+        // Add username and role info to model if user is authenticated
+        if (userDetails != null) {
+            model.addAttribute("username", userDetails.getUsername());
+            
+            // Check if user is admin for UI display
+            boolean isAdmin = userDetails.getAuthorities().stream()
+                    .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
+            model.addAttribute("isAdmin", isAdmin);
+        }
         
         return "return-form";
     }
@@ -49,11 +61,17 @@ public class WebController {
      * Handles the customer form submission.
      */
     @PostMapping("/submit-return")
-    public String processReturn(@ModelAttribute("returnRequest") ReturnRequest request, Model model) {
+    public String processReturn(@ModelAttribute("returnRequest") ReturnRequest request, 
+                               Model model, 
+                               @AuthenticationPrincipal UserDetails userDetails) {
         try {
-            // SIMULATE AUTHENTICATION
-            User customer = userRepository.findById(1L)
-                .orElseThrow(() -> new NoSuchElementException("Simulated customer (ID 1) not found. Cannot process return."));
+            // Use authenticated user instead of hardcoded ID
+            if (userDetails == null) {
+                throw new SecurityException("User not authenticated. Please log in to submit a return request.");
+            }
+            
+            User customer = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new NoSuchElementException("Authenticated user not found. Cannot process return."));
             
             request.setUser(customer);
             
@@ -61,12 +79,34 @@ public class WebController {
             
             model.addAttribute("message", "Return Request Submitted Successfully!");
             model.addAttribute("details", createdRequest);
+            
+            // Add username to success page
+            if (userDetails != null) {
+                model.addAttribute("username", userDetails.getUsername());
+                
+                // Check if user is admin for UI display
+                boolean isAdmin = userDetails.getAuthorities().stream()
+                        .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
+                model.addAttribute("isAdmin", isAdmin);
+            }
+            
             return "return-success";
 
         } catch (Exception e) {
             model.addAttribute("error", "Failed to submit return: " + e.getMessage());
             model.addAttribute("returnRequest", request);
             model.addAttribute("reasons", Arrays.asList(ReturnReason.values()));
+            
+            // Add username back to form in case of error
+            if (userDetails != null) {
+                model.addAttribute("username", userDetails.getUsername());
+                
+                // Check if user is admin for UI display
+                boolean isAdmin = userDetails.getAuthorities().stream()
+                        .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
+                model.addAttribute("isAdmin", isAdmin);
+            }
+            
             return "return-form";
         }
     }
@@ -77,9 +117,16 @@ public class WebController {
      * Serves the admin dashboard showing all PENDING requests.
      */
     @GetMapping("/admin/dashboard")
-    public String showAdminDashboard(Model model) {
+    public String showAdminDashboard(Model model, @AuthenticationPrincipal UserDetails userDetails) {
         List<ReturnRequest> pendingRequests = returnRequestService.getAllPendingRequests();
         model.addAttribute("requests", pendingRequests);
+        
+        // Add admin username to model
+        if (userDetails != null) {
+            model.addAttribute("username", userDetails.getUsername());
+            model.addAttribute("isAdmin", true); // This is admin page, so always true
+        }
+        
         return "admin-dashboard";
     }
 
@@ -87,15 +134,16 @@ public class WebController {
      * Handles the approval of a return request.
      */
     @PostMapping(value = {"/admin/approve/{id}", "/admin/approve/{id}/"}) 
-    // We use RedirectAttributes to pass flash messages across the redirect.
-    public String approveReturn(@PathVariable Long id, @RequestParam String adminNotes, RedirectAttributes redirectAttributes) {
+    public String approveReturn(@PathVariable Long id, 
+                               @RequestParam String adminNotes, 
+                               RedirectAttributes redirectAttributes,
+                               @AuthenticationPrincipal UserDetails userDetails) {
         try {
             returnRequestService.approveRequest(id, adminNotes);
             redirectAttributes.addFlashAttribute("success", "Request ID " + id + " Approved and Refunded successfully.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Failed to approve request: " + e.getMessage());
         }
-        // FIX: Changed from "forward:" to "redirect:" to prevent the 405 error after POST.
         return "redirect:/admin/dashboard"; 
     }
 
@@ -103,15 +151,16 @@ public class WebController {
      * Handles the rejection of a return request.
      */
     @PostMapping(value = {"/admin/reject/{id}", "/admin/reject/{id}/"})
-    // We use RedirectAttributes to pass flash messages across the redirect.
-    public String rejectReturn(@PathVariable Long id, @RequestParam String adminNotes, RedirectAttributes redirectAttributes) {
+    public String rejectReturn(@PathVariable Long id, 
+                              @RequestParam String adminNotes, 
+                              RedirectAttributes redirectAttributes,
+                              @AuthenticationPrincipal UserDetails userDetails) {
         try {
             returnRequestService.rejectRequest(id, adminNotes);
             redirectAttributes.addFlashAttribute("success", "Request ID " + id + " Rejected successfully.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Failed to reject request: " + e.getMessage());
         }
-        // FIX: Changed from "forward:" to "redirect:" to prevent the 405 error after POST.
         return "redirect:/admin/dashboard"; 
     }
 }

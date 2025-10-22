@@ -42,6 +42,10 @@ public class ReturnRequestServiceImpl implements ReturnRequestService {
         
         Order order = item.getOrder();
 
+        // 🟢 FIX 2: SET THE MISSING ORDER ID 🟢
+        // This sets the value for the new 'orderId' field before Hibernate saves the entity.
+        request.setOrderId(order.getId()); 
+
         // 2. Business Logic: Check 30-day return window
         long daysSinceOrder = ChronoUnit.DAYS.between(order.getOrderDate(), LocalDateTime.now());
         if (daysSinceOrder > RETURN_WINDOW_DAYS) {

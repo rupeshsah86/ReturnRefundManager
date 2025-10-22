@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.ecommerce.returnmanager.model.Order;
@@ -29,13 +30,16 @@ public class TestDataInitializer implements CommandLineRunner {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ReturnRequestRepository returnRequestRepository;
+    private final PasswordEncoder passwordEncoder; // Add this
 
     public TestDataInitializer(UserRepository userRepository, OrderRepository orderRepository,
-                               OrderItemRepository orderItemRepository, ReturnRequestRepository returnRequestRepository) {
+                               OrderItemRepository orderItemRepository, ReturnRequestRepository returnRequestRepository,
+                               PasswordEncoder passwordEncoder) { // Add this parameter
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.returnRequestRepository = returnRequestRepository;
+        this.passwordEncoder = passwordEncoder; // Initialize
     }
 
     @Override
@@ -44,11 +48,13 @@ public class TestDataInitializer implements CommandLineRunner {
             System.out.println("--- Database already initialized. Skipping sample data insertion. ---");
             return;
         }
-        System.out.println("--- Inserting Sample Data ---");
+        System.out.println("--- Inserting Sample Data with Encrypted Passwords ---");
         
-        // 1. Create Users
-        User customer = new User(null, "Alice Customer", "alice@test.com", "password123", Role.CUSTOMER);
-        User admin = new User(null, "Bob Admin", "bob@admin.com", "adminpass", Role.ADMIN);
+        // 1. Create Users with ENCRYPTED passwords
+        User customer = new User(null, "Alice Customer", "alice@test.com", 
+                               passwordEncoder.encode("password123"), Role.CUSTOMER); // Encrypted
+        User admin = new User(null, "Bob Admin", "bob@admin.com", 
+                             passwordEncoder.encode("adminpass"), Role.ADMIN); // Encrypted
         customer = userRepository.save(customer);
         admin = userRepository.save(admin);
 
@@ -92,5 +98,8 @@ public class TestDataInitializer implements CommandLineRunner {
         returnRequestRepository.save(request1);
         
         System.out.println("--- Sample Data Insertion Complete ---");
+        System.out.println("Test Accounts Created:");
+        System.out.println("Customer: alice@test.com / password123");
+        System.out.println("Admin: bob@admin.com / adminpass");
     }
 }

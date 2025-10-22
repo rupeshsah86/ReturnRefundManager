@@ -16,9 +16,23 @@
         button { padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; color: white; }
         .approve-btn { background-color: #4CAF50; }
         .reject-btn { background-color: #f44336; }
+        .user-info { background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
+        .nav-links { margin-top: 10px; }
+        .nav-links a { color: #007bff; text-decoration: none; margin-right: 15px; }
+        .nav-links a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
+    <!-- User Authentication Info -->
+    <div th:if="${username}" class="user-info">
+        <p>Welcome, Admin: <strong th:text="${username}"></strong></p>
+        <div class="nav-links">
+            <a th:href="@{/logout}">Logout</a>
+            <a th:href="@{/}">Return to Home</a>
+            <a th:href="@{/admin/dashboard}">Refresh Dashboard</a>
+        </div>
+    </div>
+
     <h1>Admin Return Dashboard - Pending Requests</h1>
 
     <div th:if="${success}" class="success" th:text="${success}"></div>
@@ -29,6 +43,8 @@
             <tr>
                 <th>ID</th>
                 <th>Order Item ID</th>
+                <th>Customer</th>
+                <th>Product</th>
                 <th>Quantity</th>
                 <th>Reason</th>
                 <th>Refund Amount</th>
@@ -40,25 +56,25 @@
             <tr th:each="request : ${requests}">
                 <td th:text="${request.id}">1</td>
                 <td th:text="${request.orderItem.id}">101</td>
+                <td th:text="${request.user.name}">Alice Customer</td>
+                <td th:text="${request.orderItem.productName}">Bluetooth Headphones</td>
                 <td th:text="${request.quantityReturned}">1</td>
                 <td th:text="${request.reason}">DAMAGED</td>
                 <td>$<span th:text="${#numbers.formatDecimal(request.refundAmount, 0, 'COMMA', 2, 'POINT')}">100.00</span></td>
                 <td th:text="${#temporals.format(request.requestDate, 'yyyy-MM-dd HH:mm')}">2025-10-19</td>
                 <td>
                     <div class="action-container">
-                        
                         <!-- Approve Form -->
                         <form th:action="@{/admin/approve/{id}(id=${request.id})}" method="post" class="action-form">
-                            <input type="text" name="adminNotes" placeholder="Admin Notes" required>
-                            <button type="submit" class="approve-btn">Approve</button> <!-- ADDED type="submit" -->
+                            <input type="text" name="adminNotes" placeholder="Approval notes..." required>
+                            <button type="submit" class="approve-btn">Approve</button>
                         </form>
                         
                         <!-- Reject Form -->
                         <form th:action="@{/admin/reject/{id}(id=${request.id})}" method="post" class="action-form">
-                            <input type="text" name="adminNotes" placeholder="Reason for Rejection" required>
-                            <button type="submit" class="reject-btn">Reject</button> <!-- ADDED type="submit" -->
+                            <input type="text" name="adminNotes" placeholder="Rejection reason..." required>
+                            <button type="submit" class="reject-btn">Reject</button>
                         </form>
-                        
                     </div>
                 </td>
             </tr>

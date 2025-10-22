@@ -20,7 +20,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor; // <--- ADD THIS IMPORT
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "return_requests")
@@ -33,16 +33,21 @@ public class ReturnRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 🔴 FIX 1: ADD THE MISSING order_id FIELD 🔴
+    // This explicitly maps to the 'order_id' column that is mandatory in your DB.
+    @Column(name = "order_id", nullable = false) 
+    private Long orderId; 
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_item_id", nullable = false)
     @NotNull(message = "Return request must specify an order item")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // <--- ADDED FIX
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private OrderItem orderItem;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @NotNull(message = "Return request must be linked to a user")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // <--- ADDED FIX
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User user;
 
     @NotNull(message = "Quantity to return is required")

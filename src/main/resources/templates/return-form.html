@@ -10,10 +10,27 @@
         input, select { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
         button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 20px; }
         .error { color: red; margin-top: 10px; }
+        .user-info { background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
+        .nav-links { margin-top: 15px; }
+        .nav-links a { color: #007bff; text-decoration: none; margin-right: 15px; }
+        .nav-links a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- User Authentication Info -->
+        <div th:if="${username}" class="user-info">
+            <p>Welcome, <strong th:text="${username}"></strong> 
+               <span th:if="${isAdmin}">(Admin)</span>
+               <span th:unless="${isAdmin}">(Customer)</span>
+            </p>
+            <div class="nav-links">
+                <a th:href="@{/logout}">Logout</a>
+                <a th:if="${isAdmin}" th:href="@{/admin/dashboard}">Admin Dashboard</a>
+                <a th:unless="${isAdmin}" th:href="@{/}">Return Form</a>
+            </div>
+        </div>
+        
         <h1>Initiate Return Request</h1>
         
         <p th:if="${error}" class="error" th:text="${error}"></p>

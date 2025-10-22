@@ -5,6 +5,8 @@ import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -30,8 +32,14 @@ public class AdminReturnController {
      * Admin views all PENDING return requests.
      */
     @GetMapping("/pending")
-    public ResponseEntity<List<ReturnRequest>> getAllPendingReturns() {
+    public ResponseEntity<List<ReturnRequest>> getAllPendingReturns(@AuthenticationPrincipal UserDetails userDetails) {
         List<ReturnRequest> requests = returnRequestService.getAllPendingRequests();
+        
+        // Log admin activity (optional - for future auditing)
+        if (userDetails != null) {
+            System.out.println("Admin " + userDetails.getUsername() + " viewed pending returns");
+        }
+        
         return new ResponseEntity<>(requests, HttpStatus.OK);
     }
     
@@ -41,9 +49,16 @@ public class AdminReturnController {
      */
     @PutMapping("/{id}/approve")
     public ResponseEntity<?> approveReturn(@PathVariable Long id, 
-                                           @RequestParam String notes) {
+                                           @RequestParam String notes,
+                                           @AuthenticationPrincipal UserDetails userDetails) {
         try {
             ReturnRequest updatedRequest = returnRequestService.approveRequest(id, notes);
+            
+            // Log admin activity (optional - for future auditing)
+            if (userDetails != null) {
+                System.out.println("Admin " + userDetails.getUsername() + " approved return request ID: " + id);
+            }
+            
             return new ResponseEntity<>(updatedRequest, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
@@ -58,9 +73,16 @@ public class AdminReturnController {
      */
     @PutMapping("/{id}/reject")
     public ResponseEntity<?> rejectReturn(@PathVariable Long id, 
-                                          @RequestParam String notes) {
+                                          @RequestParam String notes,
+                                          @AuthenticationPrincipal UserDetails userDetails) {
         try {
             ReturnRequest updatedRequest = returnRequestService.rejectRequest(id, notes);
+            
+            // Log admin activity (optional - for future auditing)
+            if (userDetails != null) {
+                System.out.println("Admin " + userDetails.getUsername() + " rejected return request ID: " + id);
+            }
+            
             return new ResponseEntity<>(updatedRequest, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);

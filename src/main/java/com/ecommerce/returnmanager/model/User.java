@@ -34,12 +34,17 @@ public class User {
     private String email;
 
     @NotBlank(message = "Password is required")
-    private String password; // In a real app, this would be hashed
+    private String password; // This will now be encrypted
 
     @Enumerated(EnumType.STRING)
     private Role role; // CUSTOMER or ADMIN
 
     public enum Role {
         CUSTOMER, ADMIN
+    }
+
+    // Add this method to get role with ROLE_ prefix for Spring Security
+    public String getSpringSecurityRole() {
+        return "ROLE_" + this.role.name();
     }
 }

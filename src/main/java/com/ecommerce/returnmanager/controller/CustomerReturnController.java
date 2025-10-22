@@ -4,6 +4,8 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,7 +25,7 @@ import jakarta.validation.Valid;
 public class CustomerReturnController {
 
     private final ReturnRequestService returnRequestService;
-    private final UserRepository userRepository; // For simulating user context
+    private final UserRepository userRepository;
 
     public CustomerReturnController(ReturnRequestService returnRequestService, UserRepository userRepository) {
         this.returnRequestService = returnRequestService;
@@ -33,25 +35,28 @@ public class CustomerReturnController {
     /**
      * POST /api/v1/customer/returns
      * Customer initiates a new return request.
-     * * NOTE: In a real application, the User context would come from a security principal,
-     * not a request parameter. We use a placeholder user ID (e.g., ID 1: Alice Customer) 
-     * for simulation, which is appropriate for a REST controller testing scenario.
      */
     @PostMapping
-    public ResponseEntity<?> initiateReturn(@Valid @RequestBody ReturnRequest request) {
+    public ResponseEntity<?> initiateReturn(@Valid @RequestBody ReturnRequest request,
+                                          @AuthenticationPrincipal UserDetails userDetails) {
         try {
-            // Simulation: Fetch the actual customer user (Alice is ID 1 from TestDataInitializer)
-            Optional<User> userOptional = userRepository.findById(1L); 
-            if (userOptional.isEmpty()) {
-                return new ResponseEntity<>("Simulated customer user not found.", HttpStatus.FORBIDDEN);
+            // Use authenticated user instead of hardcoded ID
+            if (userDetails == null) {
+                return new ResponseEntity<>("User not authenticated. Please log in to submit a return request.", HttpStatus.UNAUTHORIZED);
             }
-            request.setUser(userOptional.get());
+            
+            User customer = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found in database."));
+            
+            request.setUser(customer);
             
             ReturnRequest createdRequest = returnRequestService.initiateReturn(request);
             
             return new ResponseEntity<>(createdRequest, HttpStatus.CREATED);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An unexpected error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     
@@ -60,11 +65,35 @@ public class CustomerReturnController {
      * Customer views a specific return request.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ReturnRequest> getReturnDetails(@PathVariable Long id) {
-        // In a real app, you would verify the request belongs to the authenticated user.
-        Optional<ReturnRequest> request = returnRequestService.getRequestById(id);
-        
-        return request.map(r -> new ResponseEntity<>(r, HttpStatus.OK))
-                      .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<?> getReturnDetails(@PathVariable Long id,
+                                            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            // Verify authentication
+            if (userDetails == null) {
+                return new ResponseEntity<>("User not authenticated.", HttpStatus.UNAUTHORIZED);
+            }
+            
+            Optional<ReturnRequest> request = returnRequestService.getRequestById(id);
+            
+            if (request.isEmpty()) {
+                return new ResponseEntity<>("Return request not found with ID: " + id, HttpStatus.NOT_FOUND);
+            }
+            
+            // Security check: Verify the return request belongs to the authenticated user
+            ReturnRequest returnRequest = request.get();
+            User currentUser = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found."));
+            
+            if (!returnRequest.getUser().getId().equals(currentUser.getId())) {
+                return new ResponseEntity<>("Access denied. This return request does not belong to you.", HttpStatus.FORBIDDEN);
+            }
+            
+            return new ResponseEntity<>(returnRequest, HttpStatus.OK);
+            
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An unexpected error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
