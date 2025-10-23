@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -24,22 +25,23 @@ import com.ecommerce.returnmanager.repository.UserRepository;
  * This simulates a user, their order, and a pending return request.
  */
 @Component
+@Profile("!test") // Don't run this during tests
 public class TestDataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ReturnRequestRepository returnRequestRepository;
-    private final PasswordEncoder passwordEncoder; // Add this
+    private final PasswordEncoder passwordEncoder;
 
     public TestDataInitializer(UserRepository userRepository, OrderRepository orderRepository,
                                OrderItemRepository orderItemRepository, ReturnRequestRepository returnRequestRepository,
-                               PasswordEncoder passwordEncoder) { // Add this parameter
+                               PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.returnRequestRepository = returnRequestRepository;
-        this.passwordEncoder = passwordEncoder; // Initialize
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -52,9 +54,9 @@ public class TestDataInitializer implements CommandLineRunner {
         
         // 1. Create Users with ENCRYPTED passwords
         User customer = new User(null, "Alice Customer", "alice@test.com", 
-                               passwordEncoder.encode("password123"), Role.CUSTOMER); // Encrypted
+                               passwordEncoder.encode("password123"), Role.CUSTOMER);
         User admin = new User(null, "Bob Admin", "bob@admin.com", 
-                             passwordEncoder.encode("adminpass"), Role.ADMIN); // Encrypted
+                             passwordEncoder.encode("adminpass"), Role.ADMIN);
         customer = userRepository.save(customer);
         admin = userRepository.save(admin);
 
