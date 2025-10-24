@@ -49,8 +49,17 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/login?logout=true")
                 .permitAll()
             )
-            .csrf(csrf -> csrf.disable()); // Disable CSRF for development
+            .sessionManagement(session -> session
+            .maximumSessions(1)
+            .maxSessionsPreventsLogin(false)
+        )
+        .headers(headers -> headers
+            .contentSecurityPolicy(csp -> csp
+                .policyDirectives("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")
+            )
+        )
+        .csrf(csrf -> csrf.disable()); // Disable CSRF for API development
 
-        return http.build();
-    }
+    return http.build();
+}
 }

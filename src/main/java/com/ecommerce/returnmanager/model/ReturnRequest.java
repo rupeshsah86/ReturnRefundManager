@@ -16,8 +16,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,9 +34,8 @@ public class ReturnRequest {
     private Long id;
 
     // 🔴 FIX 1: ADD THE MISSING order_id FIELD 🔴
-    // This explicitly maps to the 'order_id' column that is mandatory in your DB.
-    @Column(name = "order_id", nullable = false) 
-    private Long orderId; 
+    @Column(name = "order_id", nullable = false)
+    private Long orderId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_item_id", nullable = false)
@@ -50,8 +49,9 @@ public class ReturnRequest {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User user;
 
+    // ✅ Updated validation for quantityReturned
     @NotNull(message = "Quantity to return is required")
-    @Min(value = 1, message = "Quantity must be at least 1")
+    @Positive(message = "Quantity must be positive")
     private Integer quantityReturned;
 
     @Column(nullable = false)
@@ -66,7 +66,7 @@ public class ReturnRequest {
     private ReturnStatus status = ReturnStatus.PENDING;
 
     // Calculated fields
-    private BigDecimal refundAmount; 
+    private BigDecimal refundAmount;
     private String adminNotes;
 
     public enum ReturnReason {
