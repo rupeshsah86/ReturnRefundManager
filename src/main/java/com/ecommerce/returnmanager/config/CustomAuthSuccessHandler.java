@@ -30,7 +30,7 @@ public class CustomAuthSuccessHandler implements AuthenticationSuccessHandler {
         if (isAdmin) {
             response.sendRedirect("/admin/dashboard");
         } else {
-            response.sendRedirect("/");
+            response.sendRedirect("/customer/dashboard");
         }
     }
 }

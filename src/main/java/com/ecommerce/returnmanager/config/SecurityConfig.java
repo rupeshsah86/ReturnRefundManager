@@ -28,13 +28,16 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints - no authentication required
-                .requestMatchers("/", "/login", "/submit-return", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/", "/login", "/submit-return", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                
+                // Dashboard and customer pages - require authentication (both CUSTOMER and ADMIN can access)
+                .requestMatchers("/dashboard", "/customer/**").authenticated()
                 
                 // API documentation - allow access but rate limit
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()
                 
                 // Analytics dashboard - require ADMIN role
-                .requestMatchers("/analytics/dashboard").hasRole("ADMIN")
+                .requestMatchers("/analytics/**").hasRole("ADMIN")
                 
                 // Admin endpoints - require ADMIN role
                 .requestMatchers("/admin/**", "/api/v1/admin/**").hasRole("ADMIN")
@@ -56,6 +59,8 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutSuccessUrl("/login?logout=true")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
                 .permitAll()
             )
             .sessionManagement(session -> session
