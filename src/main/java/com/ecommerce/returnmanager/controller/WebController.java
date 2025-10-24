@@ -163,4 +163,12 @@ public class WebController {
         }
         return "redirect:/admin/dashboard"; 
     }
+    @GetMapping("/analytics/dashboard")
+    public String showAnalyticsDashboard(Model model, @AuthenticationPrincipal UserDetails userDetails) {
+    if (userDetails != null) {
+        model.addAttribute("username", userDetails.getUsername());
+        model.addAttribute("isAdmin", true);
+    }
+    return "analytics-dashboard";
+}
 }
